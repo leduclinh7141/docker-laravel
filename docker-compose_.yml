@@ -7,10 +7,13 @@ services:
   site:
     build:
       context: ./dockerfiles
-      dockerfile: nginx.root.dockerfile
+      dockerfile: nginx.dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
     container_name: nginx
     ports:
-      - 80:80
+      - 8080:80
     volumes:
       - ./src:/var/www/html:delegated
     depends_on:
@@ -22,7 +25,8 @@ services:
       - laravel
 
   mysql:
-    image: mariadb:10.6
+    platform: linux/x86_64
+    image: mysql:5.7
     container_name: mysql
     restart: unless-stopped
     tty: true
@@ -41,7 +45,10 @@ services:
   php:
     build:
       context: ./dockerfiles
-      dockerfile: php.root.dockerfile
+      dockerfile: php.dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
     container_name: php
     volumes:
       - ./src:/var/www/html:delegated
@@ -58,20 +65,26 @@ services:
       - laravel
 
   composer:
-    image: composer:2
+    build:
+      context: ./dockerfiles
+      dockerfile: composer.dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
     container_name: composer
     volumes:
       - ./src:/var/www/html
     working_dir: /var/www/html
     depends_on:
       - php
-    user: root
+    user: laravel
     entrypoint: ['composer', '--ignore-platform-reqs']
     networks:
       - laravel
 
   npm:
-    image: node:13.7
+    platform: linux/x86_64
+    image: node:14.17.5
     container_name: npm
     volumes:
       - ./src:/var/www/html
@@ -86,7 +99,10 @@ services:
   artisan:
     build:
       context: ./dockerfiles
-      dockerfile: php.root.dockerfile
+      dockerfile: php.dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
     container_name: artisan
     volumes:
       - ./src:/var/www/html:delegated
